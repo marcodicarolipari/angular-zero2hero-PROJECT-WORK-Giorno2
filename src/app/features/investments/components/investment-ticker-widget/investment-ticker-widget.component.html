@@ -1,0 +1,81 @@
+<!-- investment-ticker-widget.component.html -->
+<section class="ticker">
+  <header class="ticker__header">
+    <div class="ticker__title">
+      <h2>Ticker Investimenti</h2>
+      <!-- [class.ok] / [class.ko]: property binding su classe CSS condizionale -->
+      <!-- isConnected() — parentesi OBBLIGATORIE: legge il valore del Signal -->
+      <span
+        class="ticker__status"
+        [class.ok]="isConnected()"
+        [class.ko]="!isConnected()">
+        {{ isConnected() ? '● LIVE' : '○ OFFLINE' }}
+      </span>
+    </div>
+
+    <div class="ticker__controls">
+      <!-- (input): event binding — aggiorna filter ad ogni carattere digitato -->
+      <!-- [value]: property binding — sincronizza il campo col Signal -->
+      <input
+        class="ticker__filter"
+        type="text"
+        placeholder="Filtra simbolo (es. ISP)"
+        [value]="filter()"
+        (input)="onFilterChange($event)" />
+
+      <select
+        class="ticker__select"
+        [value]="sortBy()"
+        (change)="onSortChange($event)">
+        <option value="symbol">Ordina: Simbolo</option>
+        <option value="price">Ordina: Prezzo</option>
+        <option value="delta">Ordina: Delta</option>
+      </select>
+
+      <label class="ticker__checkbox">
+        <!-- [checked]: property binding su boolean | (change): scrive sul Signal -->
+        <input
+          type="checkbox"
+          [checked]="onlyMovers()"
+          (change)="onToggleMovers()" />
+        Solo movers
+      </label>
+    </div>
+  </header>
+
+  <!-- @if: modern control flow Angular 17+ — nessun import necessario -->
+  <!-- Domani (Giorno 3) approfondiremo tutte le varianti di @if -->
+  @if (lastError()) {
+    <p class="ticker__error">⚠ {{ lastError() }}</p>
+  }
+
+  <!-- @for con track: OBBLIGATORIO in Angular 17+ per ottimizzare il DOM reconciliation -->
+  <!-- track item.symbol: Angular riusa il nodo DOM con lo stesso simbolo invece di ricrearlo -->
+  <!-- Senza track: ad ogni tick TUTTI i <li> vengono ricreati — DOM churn continuo -->
+  <ul class="ticker__list">
+    @for (item of viewModel().items; track item.symbol) {
+      <li class="ticker__row">
+        <span class="sym">{{ item.symbol }}</span>
+        <!-- DecimalPipe: '1.2-2' = min 1 cifra intera, esattamente 2 decimali -->
+        <span class="price">{{ item.price | number:'1.2-2':'it' }}</span>
+        <!-- [class.up/down]: colore verde/rosso basato sul segno del delta -->
+        <span
+          class="delta"
+          [class.up]="item.delta > 0"
+          [class.down]="item.delta < 0">
+          {{ item.delta >= 0 ? '+' : '' }}{{ item.delta | number:'1.2-2':'it' }}
+        </span>
+        <!-- DatePipe: 'HH:mm:ss' = ore:minuti:secondi formato 24h -->
+        <span class="ts">{{ item.ts | date:'HH:mm:ss' }}</span>
+      </li>
+    } @empty {
+      <!-- @empty: blocco opzionale mostrato quando @for non ha elementi da iterare -->
+      <!-- Sostituisce elegantemente il pattern legacy *ngIf="items.length === 0" separato -->
+      <li class="ticker__empty">Nessun simbolo corrisponde ai filtri attivi</li>
+    }
+  </ul>
+
+  <footer class="ticker__footer">
+    <span>Simboli visibili: {{ viewModel().total }} / 5</span>
+  </footer>
+</section>

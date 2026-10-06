@@ -1,0 +1,20 @@
+<div class="converter">
+  <label>
+    Importo (EUR)
+    <input type="number" min="0" step="any" [value]="amount()" (input)="onAmountChange($event)" />
+  </label>
+
+  <label>
+    Valuta
+    <select (change)="onCurrencyChange($event)">
+      @for (c of currencies(); track c.symbol) {
+        <option [value]="c.symbol" [selected]="c.symbol === selectedCurrency()">{{ c.symbol }}</option>
+      }
+    </select>
+  </label>
+
+  <p class="result">
+    {{ amount() | currency: 'EUR' }} =
+    <strong>{{ convertedAmount() | currency: selectedCurrency() }}</strong>
+  </p>
+</div>
